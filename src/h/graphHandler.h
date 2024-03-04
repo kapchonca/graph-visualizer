@@ -7,6 +7,7 @@
 #include <limits>
 #include <memory>
 #include <queue>
+#include <random>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
@@ -17,7 +18,8 @@ struct Vertex {
   Vertex(const int ind) : kVertInd(ind){};
   const int kVertInd;
   std::vector<std::weak_ptr<Vertex>> adjacent_vertices;
-  std::unordered_map<int, std::vector<std::weak_ptr<Vertex>>> distances;
+  std::unordered_map<Vertex*, int> distances;
+  std::pair<int, int> coordinate;
 };
 
 // Represents a graph
@@ -33,6 +35,11 @@ class Graph {
   // Input: the starting vertex for BFS.
   // Output: Updates the distances field of the starting vertex with BFS traversal information.
   void BFS(std::shared_ptr<Vertex> start) const;
+
+  // Function to find a k-center approximation of the graph using a greedy approach.
+  // Input: k - The number of centers to select
+  // Output: Set of vertices representing the selected k-centers
+  std::unordered_set<std::shared_ptr<Vertex>> kCenter(long unsigned k) const;
 
   std::vector<std::shared_ptr<Vertex>>
       vertices_;  // public for now for easier debugging
