@@ -19,7 +19,7 @@ struct Vertex {
   const int kVertInd;
   std::vector<std::weak_ptr<Vertex>> adjacent_vertices;
   std::unordered_map<Vertex*, int> distances;
-  int x_coord, y_coord;
+  double x, y;
   std::unordered_set<Vertex*> neighboorhood;
 };
 
@@ -61,6 +61,16 @@ class Graph {
   double CalculateYDerivative(std::shared_ptr<Vertex> parameter);
 
   double CalculateDelta(std::shared_ptr<Vertex> parameter);
+
+  double CalculateX_XDerivative(std::shared_ptr<Vertex> parameter);
+
+  double CalculateX_YDerivative(std::shared_ptr<Vertex> parameter);
+
+  double CalculateY_YDerivative(std::shared_ptr<Vertex> parameter);
+
+  double EuclideanDistance(Vertex* v, Vertex* u, float power);
+
+  void SolveLinearEquations(std::shared_ptr<Vertex> p);
 
   std::vector<std::shared_ptr<Vertex>>
       vertices_;  // public for now for easier debugging

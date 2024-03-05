@@ -120,8 +120,8 @@ void Graph::RandomLayout() const {
   std::uniform_real_distribution<> distribution(0, vertex_num_ * 30);
 
   for (auto v : vertices_) {
-    v->x_coord = distribution(rng);
-    v->y_coord = distribution(rng);
+    v->x = distribution(rng);
+    v->y = distribution(rng);
   }
 }
 
@@ -129,8 +129,8 @@ void Graph::RandomLayout() const {
 //   double energy = 0;
 //   for (auto v : vertices_) {  // clang-format off
 //     for (auto neighbor : v->neighboorhood) {
-//       energy += pow(std::sqrt(pow(v->x_coord - neighbor->x_coord, 2) +
-//                               pow(v->y_coord - neighbor->y_coord, 2)) -
+//       energy += pow(std::sqrt(pow(v->x - neighbor->x, 2) +
+//                               pow(v->y - neighbor->y, 2)) -
 //                         30 * v->distances[neighbor], 2) /
 //                         v->distances[neighbor];
 //     }  // clang-format on
@@ -148,15 +148,17 @@ void Graph::FormNeighbourhood(
   }
 }
 
+double Graph::EuclideanDistance(Vertex* v, Vertex* u, float power) {
+  return std::pow((std::pow(v->x - u->x, 2)) + pow(v->y - u->y, 2), power);
+}
+
 double Graph::CalculateXDerivative(std::shared_ptr<Vertex> parameter) {
   double first_derivative;
   for (auto neighbor : parameter->neighboorhood) {
     first_derivative +=
-        ((parameter->x_coord - neighbor->x_coord) -
-         ((30 * parameter->distances[neighbor]) *
-              (parameter->x_coord - neighbor->x_coord) /
-              std::sqrt(std::pow(parameter->x_coord - neighbor->x_coord, 2)) +
-          pow(parameter->y_coord - neighbor->y_coord, 2))) /
+        ((parameter->x - neighbor->x) -
+         ((30 * parameter->distances[neighbor]) * (parameter->x - neighbor->x) /
+          EuclideanDistance(parameter.get(), neighbor, 0.5))) /
         parameter->distances[neighbor];
   }
   return first_derivative;
@@ -166,11 +168,9 @@ double Graph::CalculateYDerivative(std::shared_ptr<Vertex> parameter) {
   double second_derivative;
   for (auto neighbor : parameter->neighboorhood) {
     second_derivative +=
-        ((parameter->y_coord - neighbor->y_coord) -
-         ((30 * parameter->distances[neighbor]) *
-              (parameter->y_coord - neighbor->y_coord) /
-              std::sqrt(std::pow(parameter->x_coord - neighbor->x_coord, 2)) +
-          pow(parameter->y_coord - neighbor->y_coord, 2))) /
+        ((parameter->y - neighbor->y) -
+         (30 * parameter->distances[neighbor]) * (parameter->y - neighbor->y) /
+             EuclideanDistance(parameter.get(), neighbor, 0.5)) /
         parameter->distances[neighbor];
   }
   return second_derivative;
@@ -182,4 +182,57 @@ double Graph::CalculateDelta(std::shared_ptr<Vertex> parameter) {
   double delta =
       std::sqrt(std::pow(first_derivative, 2) + std::pow(second_derivative, 2));
   return delta;
+}
+
+double Graph::CalculateX_XDerivative(std::shared_ptr<Vertex> parameter) {
+  double x_x_derivative;
+  for (auto n : parameter->neighboorhood) {
+    x_x_derivative +=
+        (1 - (30 * parameter->distances[n] * std::pow(parameter->y - n->y, 2)) /
+                 EuclideanDistance(parameter.get(), n, 1.5)) /
+        parameter->distances[n];
+  }
+  return x_x_derivative;
+}
+
+double Graph::CalculateX_YDerivative(std::shared_ptr<Vertex> parameter) {
+  double x_y_derivative;
+  for (auto n : parameter->neighboorhood) {
+    x_y_derivative += (30 * parameter->distances[n] * (parameter->y - n->y) *
+                       (parameter->x - n->x)) /
+                      EuclideanDistance(parameter.get(), n, 1.5) /
+                      parameter->distances[n];
+  }
+  return x_y_derivative;
+}
+
+double Graph::CalculateY_YDerivative(std::shared_ptr<Vertex> parameter) {
+  double y_y_derivative;
+  for (auto n : parameter->neighboorhood) {
+    y_y_derivative +=
+        (1 - (30 * parameter->distances[n] * std::pow(parameter->x - n->x, 2)) /
+                 EuclideanDistance(parameter.get(), n, 1.5)) /
+        parameter->distances[n];
+  }
+  return y_y_derivative;
+}
+
+void Graph::SolveLinearEquations(std::shared_ptr<Vertex> p) {
+
+  // Coefficients of the linear equations
+  double der_x_x = CalculateX_XDerivative(p);
+  double der_x_y = CalculateX_YDerivative(p);
+  double der_y_y = CalculateY_YDerivative(p);
+  double der_x = CalculateXDerivative(p);
+  double der_y = CalculateYDerivative(p);
+
+  // Calculate the solution using the substitution method
+  double y = (der_y - der_x_y * der_x / der_x_x) /
+             (der_y_y - der_x_y * der_x_y / der_x_x);
+  double x = (der_x - der_x_y * y) / der_x_x;
+
+  // Output the solution
+  std::cout << "Solution: x = " << x << ", y = " << y << std::endl;
+  p->x += x;
+  p->y += y;
 }
