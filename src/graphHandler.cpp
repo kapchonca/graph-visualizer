@@ -37,7 +37,8 @@ void Graph::PrintData() const {
   }
 }
 
-void Graph::BFS(std::shared_ptr<Vertex> start) const {
+std::unordered_map<Vertex*, int> Graph::BFS(std::shared_ptr<Vertex> start,
+                                            int max_depth) const {
   std::vector<bool> visited(vertex_num_, false);
   std::queue<std::pair<Vertex*, int>> q;
   std::unordered_map<Vertex*, int> traversal;
@@ -45,7 +46,7 @@ void Graph::BFS(std::shared_ptr<Vertex> start) const {
   visited[start->kVertInd] = true;
   q.push({start.get(), 0});
 
-  while (!q.empty()) {
+  while (!q.empty() && q.front().second < max_depth) {
     Vertex* currentVertex = q.front().first;
     int currentDepth = q.front().second;
     q.pop();
@@ -60,7 +61,7 @@ void Graph::BFS(std::shared_ptr<Vertex> start) const {
     }
   }
   traversal.erase(start.get());
-  start->distances = traversal;
+  return traversal;
 }
 
 // Greedy 2-Approximation Algorithm for k-Center
@@ -110,4 +111,75 @@ std::unordered_set<std::shared_ptr<Vertex>> Graph::kCenter(
   }
 
   return centers;
+}
+
+void Graph::RandomLayout() const {
+  // int estimated_img_size = 30 * vertex_num_;
+  std::random_device dvc;
+  std::mt19937 rng(dvc());
+  std::uniform_real_distribution<> distribution(0, vertex_num_ * 30);
+
+  for (auto v : vertices_) {
+    v->x_coord = distribution(rng);
+    v->y_coord = distribution(rng);
+  }
+}
+
+// double Graph::CalculateEnergy() {
+//   double energy = 0;
+//   for (auto v : vertices_) {  // clang-format off
+//     for (auto neighbor : v->neighboorhood) {
+//       energy += pow(std::sqrt(pow(v->x_coord - neighbor->x_coord, 2) +
+//                               pow(v->y_coord - neighbor->y_coord, 2)) -
+//                         30 * v->distances[neighbor], 2) /
+//                         v->distances[neighbor];
+//     }  // clang-format on
+//   }
+//   return energy;
+// }
+
+void Graph::FormNeighbourhood(
+    std::unordered_set<std::shared_ptr<Vertex>> centers) {
+  for (auto center : centers) {
+    std::unordered_map<Vertex*, int> traversal = BFS(center, k);
+    for (auto pair : traversal) {
+      center->neighboorhood.insert(pair.first);
+    }
+  }
+}
+
+double Graph::CalculateXDerivative(std::shared_ptr<Vertex> parameter) {
+  double first_derivative;
+  for (auto neighbor : parameter->neighboorhood) {
+    first_derivative +=
+        ((parameter->x_coord - neighbor->x_coord) -
+         ((30 * parameter->distances[neighbor]) *
+              (parameter->x_coord - neighbor->x_coord) /
+              std::sqrt(std::pow(parameter->x_coord - neighbor->x_coord, 2)) +
+          pow(parameter->y_coord - neighbor->y_coord, 2))) /
+        parameter->distances[neighbor];
+  }
+  return first_derivative;
+}
+
+double Graph::CalculateYDerivative(std::shared_ptr<Vertex> parameter) {
+  double second_derivative;
+  for (auto neighbor : parameter->neighboorhood) {
+    second_derivative +=
+        ((parameter->y_coord - neighbor->y_coord) -
+         ((30 * parameter->distances[neighbor]) *
+              (parameter->y_coord - neighbor->y_coord) /
+              std::sqrt(std::pow(parameter->x_coord - neighbor->x_coord, 2)) +
+          pow(parameter->y_coord - neighbor->y_coord, 2))) /
+        parameter->distances[neighbor];
+  }
+  return second_derivative;
+}
+
+double Graph::CalculateDelta(std::shared_ptr<Vertex> parameter) {
+  double first_derivative = CalculateXDerivative(parameter);
+  double second_derivative = CalculateYDerivative(parameter);
+  double delta =
+      std::sqrt(std::pow(first_derivative, 2) + std::pow(second_derivative, 2));
+  return delta;
 }
