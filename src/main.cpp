@@ -17,32 +17,39 @@ int main() {
 
   const std::string file = "graph";
   Graph graph(file);
-  graph.RandomLayout();
+  graph.GlobalLayout();
+
   for (auto v : graph.vertices_) {
-    v->distances = graph.BFS(v, graph.vertex_num_);
-    // std::cout << v->x_coord << ' ' << v->y_coord << std::endl;
-    // std::cout << "main vertex: " << v->kVertInd + 1 << std::endl;
-    // for (const auto& n : v->distances) {
-    //   std::cout << "vertex: " << n.first->kVertInd + 1
-    //             << "distance: " << n.second;
-    // }
-    // std::cout << std::endl;
-    // auto c = graph.kCenter(3);
-
-    // for (auto x : c) {
-    //   std::cout << x->kVertInd + 1;
-    // }
+    std::cout << "vertex index: " << v->kVertInd + 1 << " x: " << v->x
+              << " y: " << v->y << std::endl;
   }
-  auto c = graph.kCenter(3);
-  graph.FormNeighbourhood(c);
 
-  for (auto n : c) {
-    std::cout << "center ind: " << n->kVertInd + 1 << "neighbours: ";
-    for (auto y : n->neighboorhood) {
-      std::cout << y->kVertInd + 1 << ' ';
-    }
-    std::cout << "delta:" << graph.CalculateDelta(n) << std::endl;
-  }
+  // graph.RandomLayout();
+  // for (auto v : graph.vertices_) {
+  //   v->distances = graph.BFS(v, graph.vertex_num_);
+  // std::cout << v->x_coord << ' ' << v->y_coord << std::endl;
+  // std::cout << "main vertex: " << v->kVertInd + 1 << std::endl;
+  // for (const auto& n : v->distances) {
+  //   std::cout << "vertex: " << n.first->kVertInd + 1
+  //             << "distance: " << n.second;
+  // }
+  // std::cout << std::endl;
+  // auto c = graph.kCenter(3);
+
+  // for (auto x : c) {
+  //   std::cout << x->kVertInd + 1;
+  // }
+  // }
+  // auto c = graph.kCenter(3);
+  // graph.FormNeighbourhood(c);
+
+  // for (auto n : c) {
+  //   std::cout << "center ind: " << n->kVertInd + 1 << "neighbours: ";
+  //   for (auto y : n->neighboorhood) {
+  //     std::cout << y->kVertInd + 1 << ' ';
+  //   }
+  //   std::cout << "delta:" << graph.CalculateDelta(n) << std::endl;
+  // }
   // std::cout << graph.CalculateEnergy();
   return 0;
 }

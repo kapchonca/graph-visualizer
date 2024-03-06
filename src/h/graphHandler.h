@@ -35,8 +35,7 @@ class Graph {
   // Purpose: Perform Breadth-First Search (BFS) on the graph starting from a specified vertex.
   // Input: the starting vertex for BFS.
   // Output: Updates the distances field of the starting vertex with BFS traversal information.
-  std::unordered_map<Vertex*, int> BFS(std::shared_ptr<Vertex> start,
-                                       int max_depth) const;
+  std::unordered_map<Vertex*, int> BFS(Vertex* start, int max_depth) const;
 
   void UpdateDistances();
 
@@ -49,28 +48,37 @@ class Graph {
   void RandomLayout() const;
 
   // Finds all neighboors up to a certain depth
-  void FormNeighbourhood(std::unordered_set<std::shared_ptr<Vertex>>
-                             chip_chrome_and_the_mono_tones);
-
-  // double CalculateEnergy();
+  void FormNeighbourhood(Vertex* chip_chrome_and_the_mono_tones, int radius);
 
   // Calculates derivative with respect to x of energy function
-  double CalculateXDerivative(std::shared_ptr<Vertex> parameter);
+  double CalculateXDerivative(Vertex* parameter);
 
   // Calculates derivative with respect to y of energy function
-  double CalculateYDerivative(std::shared_ptr<Vertex> parameter);
+  double CalculateYDerivative(Vertex* parameter);
 
-  double CalculateDelta(std::shared_ptr<Vertex> parameter);
+  // Calculates an auxiliary value that helps to identify the vertex that is most deviated from its optimal placement
+  double CalculateDelta(Vertex* parameter);
 
-  double CalculateX_XDerivative(std::shared_ptr<Vertex> parameter);
+  // Calculates one coefficient for linear equations
+  double CalculateX_XDerivative(Vertex* parameter);
 
-  double CalculateX_YDerivative(std::shared_ptr<Vertex> parameter);
+  // Calculates one coefficient for linear equations
+  double CalculateX_YDerivative(Vertex* parameter);
 
-  double CalculateY_YDerivative(std::shared_ptr<Vertex> parameter);
+  // Calculates one coefficient for linear equations
+  double CalculateY_YDerivative(Vertex* parameter);
 
+  // Distance between two vertices on a plane
   double EuclideanDistance(Vertex* v, Vertex* u, float power);
 
-  void SolveLinearEquations(std::shared_ptr<Vertex> p);
+  // Linear equation to adjust placement of a vertex
+  void SolveLinearEquations(Vertex* p);
+
+  // Сalculates the best location of vertices in small groups
+  void LocalLayout(Vertex* p, int radius);
+
+  // Сalculates the best location of vertices in the entire graph
+  void GlobalLayout();
 
   std::vector<std::shared_ptr<Vertex>>
       vertices_;  // public for now for easier debugging
