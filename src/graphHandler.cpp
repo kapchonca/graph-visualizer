@@ -111,10 +111,9 @@ std::unordered_set<std::shared_ptr<Vertex>> Graph::kCenter(
 }
 
 void Graph::RandomLayout() const {
-  // int estimated_img_size = 30 * vertex_num_;
   std::random_device dvc;
   std::mt19937 rng(dvc());
-  std::uniform_real_distribution<> distribution(0, vertex_num_ * 30);
+  std::uniform_real_distribution<> distribution(0, vertex_num_ * kEdgeLen);
 
   for (auto v : vertices_) {
     v->x = distribution(rng);
@@ -139,11 +138,11 @@ double Graph::EuclideanDistance(Vertex* v, Vertex* u, float power) {
 double Graph::CalculateXDerivative(Vertex* parameter) {
   double first_derivative = 0.0;
   for (auto neighbor : parameter->neighboorhood) {
-    first_derivative +=
-        ((parameter->x - neighbor->x) -
-         ((30 * parameter->distances[neighbor]) * (parameter->x - neighbor->x) /
-          EuclideanDistance(parameter, neighbor, 0.5))) /
-        parameter->distances[neighbor];
+    first_derivative += ((parameter->x - neighbor->x) -
+                         ((kEdgeLen * parameter->distances[neighbor]) *
+                          (parameter->x - neighbor->x) /
+                          EuclideanDistance(parameter, neighbor, 0.5))) /
+                        parameter->distances[neighbor];
   }
   return first_derivative;
 }
@@ -151,11 +150,11 @@ double Graph::CalculateXDerivative(Vertex* parameter) {
 double Graph::CalculateYDerivative(Vertex* parameter) {
   double second_derivative = 0.0;
   for (auto neighbor : parameter->neighboorhood) {
-    second_derivative +=
-        ((parameter->y - neighbor->y) -
-         (30 * parameter->distances[neighbor]) * (parameter->y - neighbor->y) /
-             EuclideanDistance(parameter, neighbor, 0.5)) /
-        parameter->distances[neighbor];
+    second_derivative += ((parameter->y - neighbor->y) -
+                          (kEdgeLen * parameter->distances[neighbor]) *
+                              (parameter->y - neighbor->y) /
+                              EuclideanDistance(parameter, neighbor, 0.5)) /
+                         parameter->distances[neighbor];
   }
   return second_derivative;
 }
@@ -171,10 +170,10 @@ double Graph::CalculateDelta(Vertex* parameter) {
 double Graph::CalculateX_XDerivative(Vertex* parameter) {
   double x_x_derivative = 0.0;
   for (auto n : parameter->neighboorhood) {
-    x_x_derivative +=
-        (1 - (30 * parameter->distances[n] * std::pow(parameter->y - n->y, 2)) /
-                 EuclideanDistance(parameter, n, 1.5)) /
-        parameter->distances[n];
+    x_x_derivative += (1 - (kEdgeLen * parameter->distances[n] *
+                            std::pow(parameter->y - n->y, 2)) /
+                               EuclideanDistance(parameter, n, 1.5)) /
+                      parameter->distances[n];
   }
   return x_x_derivative;
 }
@@ -182,8 +181,8 @@ double Graph::CalculateX_XDerivative(Vertex* parameter) {
 double Graph::CalculateX_YDerivative(Vertex* parameter) {
   double x_y_derivative = 0.0;
   for (auto n : parameter->neighboorhood) {
-    x_y_derivative += (30 * parameter->distances[n] * (parameter->y - n->y) *
-                       (parameter->x - n->x)) /
+    x_y_derivative += (kEdgeLen * parameter->distances[n] *
+                       (parameter->y - n->y) * (parameter->x - n->x)) /
                       EuclideanDistance(parameter, n, 1.5) /
                       parameter->distances[n];
   }
@@ -193,10 +192,10 @@ double Graph::CalculateX_YDerivative(Vertex* parameter) {
 double Graph::CalculateY_YDerivative(Vertex* parameter) {
   double y_y_derivative = 0.0;
   for (auto n : parameter->neighboorhood) {
-    y_y_derivative +=
-        (1 - (30 * parameter->distances[n] * std::pow(parameter->x - n->x, 2)) /
-                 EuclideanDistance(parameter, n, 1.5)) /
-        parameter->distances[n];
+    y_y_derivative += (1 - (kEdgeLen * parameter->distances[n] *
+                            std::pow(parameter->x - n->x, 2)) /
+                               EuclideanDistance(parameter, n, 1.5)) /
+                      parameter->distances[n];
   }
   return y_y_derivative;
 }
@@ -255,7 +254,7 @@ void Graph::SolveLinearEquations(Vertex* p) {
 void Graph::LocalLayout(Vertex* p, int radius) {
   double max_delta;
   Vertex* v_to_adjust;
-  for (unsigned long i = 0; i < 4 * vertices_.size(); ++i) {
+  for (unsigned long i = 0; i < kIterations * vertices_.size(); ++i) {
     max_delta = 0;
     for (auto v : p->neighboorhood) {
       FormNeighbourhood(v, radius);
@@ -278,7 +277,7 @@ void Graph::GlobalLayout() {
   RandomLayout();
 
   int radius;
-
+  int k = kMinSize;
   while (k <= vertex_num_) {
     auto c = kCenter(k);
 
@@ -298,7 +297,7 @@ void Graph::GlobalLayout() {
         maxDistance = minDistance;
       }
     }
-    radius = 7 * maxDistance;
+    radius = kLocalRadius * maxDistance;
     for (auto center : c) {
       FormNeighbourhood(center.get(), radius);
       LocalLayout(center.get(), radius);
@@ -310,6 +309,36 @@ void Graph::GlobalLayout() {
       v->x += distribution(gen);
       v->y += distribution(gen);
     }
-    k *= 3;
+    k *= kRatio;
   }
+}
+
+void Graph::RoundCoords(Vertex* v) {
+  v->x = std::round(v->x);
+  v->y = std::round(v->y);
+}
+
+std::pair<int, int> Graph::MoveCoordinates() {
+
+  double min_x = std::numeric_limits<int>::max();
+  double min_y = std::numeric_limits<int>::max();
+
+  double max_x = std::numeric_limits<int>::min();
+  double max_y = std::numeric_limits<int>::min();
+
+  for (auto v : vertices_) {
+    RoundCoords(v.get());
+    min_x = std::min(min_x, v->x);
+    min_y = std::min(min_y, v->y);
+    max_x = std::max(max_x, v->x);
+    max_y = std::max(max_y, v->y);
+  }
+
+  for (auto v : vertices_) {
+    v->x += kEdgeLen - min_x;
+    v->y += kEdgeLen - min_y;
+  }
+
+  return std::pair<int, int>(
+      {max_x + 2 * kEdgeLen - min_x, max_y + 2 * kEdgeLen - min_y});
 }

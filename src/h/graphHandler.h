@@ -80,13 +80,22 @@ class Graph {
   // Сalculates the best location of vertices in the entire graph
   void GlobalLayout();
 
+  // Moves vertices to optimal coordinates for image size optimization
+  std::pair<int, int> MoveCoordinates();
+
+  void RoundCoords(Vertex* v);
+
   std::vector<std::shared_ptr<Vertex>>
       vertices_;  // public for now for easier debugging
   int vertex_num_;
 
  private:
   int edge_num_;
-  int k = 3;
+  const int kEdgeLen = 30;
+  const int kLocalRadius = 7;
+  const int kIterations = 4;
+  const int kRatio = 3;
+  const int kMinSize = 3;
 };
 
 #endif  // LAB4_H_GRAPHHANDLER_H_

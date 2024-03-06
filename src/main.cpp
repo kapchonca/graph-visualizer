@@ -18,7 +18,8 @@ int main() {
   const std::string file = "graph";
   Graph graph(file);
   graph.GlobalLayout();
-
+  auto c = graph.MoveCoordinates();
+  std::cout << "width: " << c.first << " height: " << c.second << std::endl;
   for (auto v : graph.vertices_) {
     std::cout << "vertex index: " << v->kVertInd + 1 << " x: " << v->x
               << " y: " << v->y << std::endl;
