@@ -5,7 +5,7 @@ project(lab4)
 # find_package(GTest REQUIRED)
 # include_directories(${GTEST_INCLUDE_DIRS})
 
-add_executable(lab4 main.cpp bmpHandler.cpp graphHandler.cpp)
+add_executable(lab4 main.cc bmpHandler.cc graphHandler.cc graphVisualizator.cc graphMath.cc)
 
 # include_directories(/usr/include/gtest)
 

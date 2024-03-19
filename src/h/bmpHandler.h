@@ -32,7 +32,6 @@ class BMPWriter {
  public:
   BMPWriter();
 
-  void setPixel(int x, int y, int8_t red, int8_t green, int8_t blue);
   bool save(const std::string filename);
   std::vector<std::vector<int8_t>> Read(const std::string& filename);
   int calculateRowSize(BMPHeader header);

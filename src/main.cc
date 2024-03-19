@@ -1,15 +1,17 @@
 #include "h/bmpHandler.h"
 #include "h/graphHandler.h"
+#include "h/graphVisualizator.h"
 
 int main() {
-  const std::string file = "graph";
-  Graph graph(file);
+  const std::string filename = "binary_tree";
+  Graph graph("examples/" + filename + ".txt");
   graph.GlobalLayout();
-  std::pair<int, int> dimensions = graph.MoveCoordinates();
+  Visualizator vis(graph.vertices_);
+  std::pair<int, int> dimensions = vis.MoveCoordinates();
   BMPWriter write;
   write.SetDimensions(dimensions.first, dimensions.second);
-  write.imageData_ = graph.GetPixels(dimensions);
-  write.save("output.bmp");
+  write.imageData_ = vis.GetPixels(dimensions);
+  write.save("output/" + filename + ".bmp");
 
   // BMPWriter bmpWriter;
   // bmpWriter.SetDimensions(8, 16);
