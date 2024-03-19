@@ -2,28 +2,43 @@
 #include "h/graphHandler.h"
 
 int main() {
-  // const int width = 800;
-  // const int height = 600;
-
-  // BMPWriter bmpWriter("output.bmp", width, height);
-
-  // for (int x = 0; x < width / 2; x += 1) {
-  //   for (int y = 0; y < height / 2; y += 1) {
-  //     bmpWriter.setPixel(x, y, 0, 120, 0);
-  //   }
-  // }
-
-  // bmpWriter.save();
-
   const std::string file = "graph";
   Graph graph(file);
   graph.GlobalLayout();
-  auto c = graph.MoveCoordinates();
-  std::cout << "width: " << c.first << " height: " << c.second << std::endl;
-  for (auto v : graph.vertices_) {
-    std::cout << "vertex index: " << v->kVertInd + 1 << " x: " << v->x
-              << " y: " << v->y << std::endl;
-  }
+  std::pair<int, int> dimensions = graph.MoveCoordinates();
+  BMPWriter write;
+  write.SetDimensions(dimensions.first, dimensions.second);
+  write.imageData_ = graph.GetPixels(dimensions);
+  write.save("output.bmp");
+
+  // BMPWriter bmpWriter;
+  // bmpWriter.SetDimensions(8, 16);
+  // std::vector<std::vector<int8_t>> pixels = bmpWriter.Read("./sprites/2.bmp");
+  // bmpWriter.imageData_ = pixels;
+  // bmpWriter.save("huy.bmp");
+
+  // std::cout << dimensions.first << dimensions.second;
+  // bmpWriter.SetDimensions(dimensions.first, dimensions.second);
+  // for (int x = 0; x < dimensions.first / 2; x += 1) {
+  //   for (int y = 0; y < dimensions.second / 2; y += 1) {
+  //     bmpWriter.setPixel(x, y, 0, 120, 0);
+  //   }
+  // }
+  // bmpWriter.save("output.bmp");
+
+  // BMPWriter reader;
+  // std::vector<std::vector<int8_t>> pixels =
+  //     reader.Read("../src/sprites/circle.bmp");
+
+  // const std::string file = "graph";
+  // Graph graph(file);
+  // graph.GlobalLayout();
+  // auto c = graph.MoveCoordinates();
+  // std::cout << "width: " << c.first << " height: " << c.second << std::endl;
+  // for (auto v : graph.vertices_) {
+  //   std::cout << "vertex index: " << v->kVertInd + 1 << " x: " << v->x
+  //             << " y: " << v->y << std::endl;
+  // }
 
   // graph.RandomLayout();
   // for (auto v : graph.vertices_) {

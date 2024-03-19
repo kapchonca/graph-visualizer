@@ -13,6 +13,8 @@
 #include <unordered_set>
 #include <vector>
 
+#include "bmpHandler.h"
+
 // Structure representing a vertex in the graph that stores adjacent vertices and distances to them
 struct Vertex {
   Vertex(const int ind) : kVertInd(ind){};
@@ -36,8 +38,6 @@ class Graph {
   // Input: the starting vertex for BFS.
   // Output: Updates the distances field of the starting vertex with BFS traversal information.
   std::unordered_map<Vertex*, int> BFS(Vertex* start, int max_depth) const;
-
-  void UpdateDistances();
 
   // Function to find a k-center approximation of the graph using a greedy approach.
   // Input: k - The number of centers to select
@@ -85,17 +85,22 @@ class Graph {
 
   void RoundCoords(Vertex* v);
 
+  std::vector<std::vector<int8_t>> GetPixels(std::pair<int, int> dimensions);
+
+  std::vector<std::vector<int8_t>> DrawNumbers(
+      std::vector<std::vector<int8_t>> image_data);
+
   std::vector<std::shared_ptr<Vertex>>
       vertices_;  // public for now for easier debugging
   int vertex_num_;
 
  private:
   int edge_num_;
-  const int kEdgeLen = 30;
+  const int kEdgeLen = 40;
   const int kLocalRadius = 7;
   const int kIterations = 4;
   const int kRatio = 3;
-  const int kMinSize = 3;
+  const int kMinSize = 2;
 };
 
 #endif  // LAB4_H_GRAPHHANDLER_H_

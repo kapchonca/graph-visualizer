@@ -30,16 +30,17 @@ struct BMPHeader {
 
 class BMPWriter {
  public:
-  BMPWriter(const std::string& filename, int width, int height);
-  ~BMPWriter();
+  BMPWriter();
 
   void setPixel(int x, int y, int8_t red, int8_t green, int8_t blue);
-  bool save();
+  bool save(const std::string filename);
+  std::vector<std::vector<int8_t>> Read(const std::string& filename);
+  int calculateRowSize(BMPHeader header);
+  void SetDimensions(int width, int height);
+  std::vector<std::vector<int8_t>> imageData_;
 
  private:
-  std::ofstream file_;
   BMPHeader header_;
-  std::vector<std::vector<int8_t>> imageData_;
 };
 
 #endif  // LAB4_H_BMPHANDLER_H_
