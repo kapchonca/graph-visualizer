@@ -31,9 +31,6 @@ class Graph {
   // Constructor reads data from a file and initializes the graph.
   Graph(const std::string file_path);
 
-  // Print the graph data, including vertex indices and their adjacent vertices.
-  void PrintData() const;
-
   // Purpose: Perform Breadth-First Search (BFS) on the graph starting from a specified vertex.
   // Input: the starting vertex for BFS.
   // Output: Updates the distances field of the starting vertex with BFS traversal information.
@@ -50,23 +47,15 @@ class Graph {
   // Finds all neighboors up to a certain depth
   void FormNeighbourhood(Vertex* chip_chrome_and_the_mono_tones, int radius);
 
-  // Calculates derivative with respect to x of energy function
-  double CalculateXDerivative(Vertex* parameter);
-
-  // Calculates derivative with respect to y of energy function
-  double CalculateYDerivative(Vertex* parameter);
+  // Calculates derivative with respect to given coordinate of energy function
+  double OneVariableDerivative(Vertex* parameter, char with_respect);
 
   // Calculates an auxiliary value that helps to identify the vertex that is most deviated from its optimal placement
   double CalculateDelta(Vertex* parameter);
 
-  // Calculates one coefficient for linear equations
-  double CalculateX_XDerivative(Vertex* parameter);
-
-  // Calculates one coefficient for linear equations
-  double CalculateX_YDerivative(Vertex* parameter);
-
-  // Calculates one coefficient for linear equations
-  double CalculateY_YDerivative(Vertex* parameter);
+  // Calculates a coefficient for linear equations with respect to given coordinates
+  double TwoVariablesDerivative(Vertex* parameter, char with_respect1,
+                                char with_respect2);
 
   // Distance between two vertices on a plane
   double EuclideanDistance(Vertex* v, Vertex* u, float power);

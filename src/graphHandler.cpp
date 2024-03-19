@@ -27,16 +27,6 @@ Graph::Graph(const std::string file_path) {
   input_file.close();
 }
 
-// void Graph::PrintData() const {
-//   for (std::shared_ptr<Vertex> v : vertices_) {
-//     std::cout << v->kVertInd << std::endl;
-//     for (std::weak_ptr<Vertex> adj : v->adjacent_vertices) {
-//       std::cout << adj.lock()->kVertInd << ' ';
-//     }
-//     std::cout << std::endl;
-//   }
-// }
-
 std::unordered_map<Vertex*, int> Graph::BFS(Vertex* start,
                                             int max_depth) const {
   std::vector<bool> visited(vertex_num_, false);
@@ -135,81 +125,58 @@ double Graph::EuclideanDistance(Vertex* v, Vertex* u, float power) {
   return std::pow((std::pow(v->x - u->x, 2)) + pow(v->y - u->y, 2), power);
 }
 
-double Graph::CalculateXDerivative(Vertex* parameter) {
-  double first_derivative = 0.0;
+double Graph::OneVariableDerivative(Vertex* parameter, char with_respect) {
+  double coordinate_p = (with_respect == 'x') ? parameter->x : parameter->y;
+  double derivative = 0.0;
   for (auto neighbor : parameter->neighboorhood) {
-    first_derivative += ((parameter->x - neighbor->x) -
-                         ((kEdgeLen * parameter->distances[neighbor]) *
-                          (parameter->x - neighbor->x) /
-                          EuclideanDistance(parameter, neighbor, 0.5))) /
-                        parameter->distances[neighbor];
+    double coordinate_n = (with_respect == 'x') ? neighbor->x : neighbor->y;
+    derivative += ((coordinate_p - coordinate_n) -
+                   (kEdgeLen * parameter->distances[neighbor]) *
+                       (coordinate_p - coordinate_n) /
+                       EuclideanDistance(parameter, neighbor, 0.5)) /
+                  parameter->distances[neighbor];
   }
-  return first_derivative;
-}
-
-double Graph::CalculateYDerivative(Vertex* parameter) {
-  double second_derivative = 0.0;
-  for (auto neighbor : parameter->neighboorhood) {
-    second_derivative += ((parameter->y - neighbor->y) -
-                          (kEdgeLen * parameter->distances[neighbor]) *
-                              (parameter->y - neighbor->y) /
-                              EuclideanDistance(parameter, neighbor, 0.5)) /
-                         parameter->distances[neighbor];
-  }
-  return second_derivative;
+  return derivative;
 }
 
 double Graph::CalculateDelta(Vertex* parameter) {
-  double first_derivative = CalculateXDerivative(parameter);
-  double second_derivative = CalculateYDerivative(parameter);
+  double first_derivative = OneVariableDerivative(parameter, 'x');
+  double second_derivative = OneVariableDerivative(parameter, 'y');
   double delta =
       std::sqrt(std::pow(first_derivative, 2) + std::pow(second_derivative, 2));
   return delta;
 }
 
-double Graph::CalculateX_XDerivative(Vertex* parameter) {
-  double x_x_derivative = 0.0;
+double Graph::TwoVariablesDerivative(Vertex* parameter, char with_respect1,
+                                     char with_respect2) {
+  double derivative = 0.0;
+  double coordinate_p1 = (with_respect1 == 'x') ? parameter->x : parameter->y;
+  double coordinate_p2 = (with_respect2 == 'x') ? parameter->x : parameter->y;
   for (auto n : parameter->neighboorhood) {
-    x_x_derivative += (1 - (kEdgeLen * parameter->distances[n] *
-                            std::pow(parameter->y - n->y, 2)) /
-                               EuclideanDistance(parameter, n, 1.5)) /
-                      parameter->distances[n];
+    double coordinate_n1 = (with_respect1 == 'x') ? n->x : n->y;
+    double coordinate_n2 = (with_respect2 == 'x') ? n->x : n->y;
+    double intermed_value =
+        (kEdgeLen * parameter->distances[n] * (coordinate_p1 - coordinate_n1) *
+         (coordinate_p2 - coordinate_n2)) /
+        EuclideanDistance(parameter, n, 1.5);
+    if (!(with_respect1 == 'x' && with_respect2 == 'y')) {
+      intermed_value = 1 - intermed_value;
+    }
+    derivative += intermed_value / parameter->distances[n];
   }
-  return x_x_derivative;
-}
-
-double Graph::CalculateX_YDerivative(Vertex* parameter) {
-  double x_y_derivative = 0.0;
-  for (auto n : parameter->neighboorhood) {
-    x_y_derivative += (kEdgeLen * parameter->distances[n] *
-                       (parameter->y - n->y) * (parameter->x - n->x)) /
-                      EuclideanDistance(parameter, n, 1.5) /
-                      parameter->distances[n];
-  }
-  return x_y_derivative;
-}
-
-double Graph::CalculateY_YDerivative(Vertex* parameter) {
-  double y_y_derivative = 0.0;
-  for (auto n : parameter->neighboorhood) {
-    y_y_derivative += (1 - (kEdgeLen * parameter->distances[n] *
-                            std::pow(parameter->x - n->x, 2)) /
-                               EuclideanDistance(parameter, n, 1.5)) /
-                      parameter->distances[n];
-  }
-  return y_y_derivative;
+  return derivative;
 }
 
 void Graph::SolveLinearEquations(Vertex* p) {
 
   // Coefficients of the linear equations
-  double a_1 = CalculateX_XDerivative(p);
-  double b_1 = CalculateX_YDerivative(p);
-  double c_1 = -CalculateXDerivative(p);
+  double a_1 = TwoVariablesDerivative(p, 'y', 'y');
+  double b_1 = TwoVariablesDerivative(p, 'x', 'y');
+  double c_1 = -OneVariableDerivative(p, 'x');
 
-  double a_2 = CalculateX_YDerivative(p);
-  double b_2 = CalculateY_YDerivative(p);
-  double c_2 = -CalculateYDerivative(p);
+  double a_2 = TwoVariablesDerivative(p, 'x', 'y');
+  double b_2 = TwoVariablesDerivative(p, 'x', 'x');
+  double c_2 = -OneVariableDerivative(p, 'y');
 
   double delta_x = 0;
   double delta_y = 0;
