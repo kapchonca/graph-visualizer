@@ -36,7 +36,7 @@ class Graph {
   // Function to find a k-center approximation of the graph using a greedy approach.
   // Input: k - The number of centers to select
   // Output: Set of vertices representing the selected k-centers
-  std::unordered_set<std::shared_ptr<Vertex>> kCenter(long unsigned k) const;
+  std::unordered_set<vert_p> kCenter(long unsigned k) const;  //Learn about RVO
 
   // Assigns random x- and y-coordinates to verticeso on a plane
   void RandomLayout() const;
@@ -50,16 +50,24 @@ class Graph {
   // Сalculates the best location of vertices in the entire graph
   void GlobalLayout();
 
-  std::vector<std::shared_ptr<Vertex>> vertices_;
+  void ShortestPaths(Vertex* start);
+
   GraphMath graph_math;
   BMPWriter write;
+
+  std::vector<vert_p> vertices_;
+  std::unordered_map<Vertex*,
+                     std::unordered_map<int, std::unordered_set<Vertex*>>>
+      shortest_paths_;
+
   int vertex_num_;
   int edge_num_;
+
   const int kEdgeLen = 40;
   const int kLocalRadius = 7;
   const int kIterations = 4;
-  const int kRatio = 3;
-  const int kMinSize = 2;
+  int kRatio = 4;
+  const int kMinSize = 10;
 };
 
 #endif  // LAB4_H_GRAPHHANDLER_H_

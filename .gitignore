@@ -39,4 +39,5 @@ main
 graphHandler
 bmpHandler
 graphVisualizator
+graphMath
 output.bmp

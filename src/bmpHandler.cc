@@ -12,14 +12,14 @@ bool BMPWriter::save(const std::string& filename) {
   file_.write(reinterpret_cast<char*>(&header_), sizeof(BMPHeader));
 
   for (int i = 0; i < header_.height; ++i) {
-    file_.write(reinterpret_cast<char*>(imageData_[i].data()),
+    file_.write(reinterpret_cast<char*>(image_data_[i].data()),
                 3 * header_.width);
     for (int j = 0; j < (4 - (3 * header_.width) % 4) % 4; ++j) {
       file_.put(0);
     }
   }
 
-  file_.write(reinterpret_cast<char*>(imageData_.data()), header_.height);
+  file_.write(reinterpret_cast<char*>(image_data_.data()), header_.height);
   std::cout << "BMP image saved successfully." << std::endl;
   file_.close();
   return true;
@@ -32,26 +32,26 @@ std::vector<std::vector<int8_t>> BMPWriter::Read(const std::string& filename) {
   }
   file.read(reinterpret_cast<char*>(&header_), sizeof(BMPHeader));
 
-  int bytesToSkip = header_.dataOffset - sizeof(BMPHeader);
+  int bytes_to_skip = header_.dataOffset - sizeof(BMPHeader);
 
-  file.seekg(bytesToSkip, std::ios::cur);
+  file.seekg(bytes_to_skip, std::ios::cur);
 
-  int rowSize = calculateRowSize();
-  int paddedSize = rowSize * header_.height;
+  int row_size = calculateRowSize();
+  int padded_size = row_size * header_.height;
 
-  std::vector<int8_t> temp_img_data(paddedSize, 0);
+  std::vector<int8_t> temp_img_data(padded_size, 0);
 
-  file.read(reinterpret_cast<char*>(temp_img_data.data()), paddedSize);
+  file.read(reinterpret_cast<char*>(temp_img_data.data()), padded_size);
 
   file.close();
 
   for (int h = 0; h < header_.height; ++h) {
     for (int w = 0; w < header_.width; ++w) {
-      imageData_[h][w] = temp_img_data[(h * header_.width + w)];
+      image_data_[h][w] = temp_img_data[(h * header_.width + w)];
     }
   }
 
-  return imageData_;
+  return image_data_;
 }
 
 int BMPWriter::calculateRowSize() {
@@ -63,10 +63,10 @@ int BMPWriter::calculateRowSize() {
 void BMPWriter::SetDimensions(int width, int height) {
   header_.width = width;
   header_.height = height;
-  imageData_.resize(height,
-                    std::vector<int8_t>(header_.bitsPerPixel / 8 * width, 0));
+  image_data_.resize(height,
+                     std::vector<int8_t>(header_.bitsPerPixel / 8 * width, 0));
 }
 
-void BMPWriter::SetImageData(std::vector<std::vector<int8_t>> imageData) {
-  imageData_ = imageData;
+void BMPWriter::SetImageData(std::vector<std::vector<int8_t>> image_data) {
+  image_data_ = image_data;
 }

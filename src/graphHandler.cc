@@ -19,9 +19,28 @@ Graph::Graph(const std::string& file_path) {
 
   // Read edges and establish connections between vertices.
   int num1, num2;
+  int counter = 0;
   while (input_file >> num1 >> num2) {
-    vertices_[num1 - 1]->adjacent_vertices.push_back(vertices_[num2 - 1]);
-    vertices_[num2 - 1]->adjacent_vertices.push_back(vertices_[num1 - 1]);
+    if (num1 < 1 || num1 > vertex_num_ || num2 < 1 || num2 > vertex_num_) {
+      throw std::runtime_error("Invalid vertex index in edge definition");
+    }
+
+    if (counter == edge_num_) {
+      throw std::runtime_error("Invalid number of rows in input file");
+    }
+
+    if (num1 != num2) {
+      vertices_[num1 - 1]->adjacent_vertices.emplace_back(
+          vertices_[num2 - 1].get());
+      vertices_[num2 - 1]->adjacent_vertices.emplace_back(
+          vertices_[num1 - 1].get());
+    }
+
+    ++counter;
+  }
+
+  if (counter < edge_num_) {
+    throw std::runtime_error("Invalid number of rows in input file");
   }
 
   input_file.close();
@@ -37,16 +56,16 @@ std::unordered_map<Vertex*, int> Graph::BFS(Vertex* start,
   q.push({start, 0});
 
   while (!q.empty() && q.front().second < max_depth) {
-    Vertex* currentVertex = q.front().first;
-    int currentDepth = q.front().second;
+    Vertex* current_vertex = q.front().first;
+    int current_depth = q.front().second;
     q.pop();
-    traversal[currentVertex] = currentDepth;
+    traversal[current_vertex] = current_depth;
 
     // Explore neighbors and update distances.
-    for (std::weak_ptr<Vertex> neighbor : currentVertex->adjacent_vertices) {
-      if (!visited[neighbor.lock()->kVertInd]) {
-        visited[neighbor.lock()->kVertInd] = true;
-        q.push({neighbor.lock().get(), currentDepth + 1});
+    for (Vertex* neighbor : current_vertex->adjacent_vertices) {
+      if (!visited[neighbor->kVertInd]) {
+        visited[neighbor->kVertInd] = true;
+        q.push({neighbor, current_depth + 1});
       }
     }
   }
@@ -57,40 +76,40 @@ std::unordered_map<Vertex*, int> Graph::BFS(Vertex* start,
 // Greedy 2-Approximation Algorithm for k-Center
 std::unordered_set<vert_p> Graph::kCenter(long unsigned k) const {
   std::unordered_set<vert_p> centers;
-  std::unordered_set<vert_p> remainingVertices;
+  std::unordered_set<vert_p> remaining_vertices;
 
-  remainingVertices.insert(vertices_.begin(), vertices_.end());
+  remaining_vertices.insert(vertices_.begin(), vertices_.end());
   // Select the first center arbitrarily
   std::random_device dev;
   std::mt19937 rng(dev());
   std::uniform_int_distribution<std::mt19937::result_type> distribution(
       0, vertex_num_ - 1);
 
-  vert_p firstVertex = vertices_[distribution(rng)];
-  centers.insert(firstVertex);
-  remainingVertices.erase(firstVertex);
+  vert_p first_vertex = vertices_[distribution(rng)];
+  centers.insert(first_vertex);
+  remaining_vertices.erase(first_vertex);
 
   while (centers.size() < k) {
-    vert_p farthestVertex = nullptr;
-    int maxDistance = -1;
+    vert_p farthest_vertex = nullptr;
+    int max_distance = -1;
 
     // Find the vertex farthest from the current set of centers
-    for (vert_p v : remainingVertices) {
-      int minDistance = std::numeric_limits<int>::max();
+    for (vert_p v : remaining_vertices) {
+      int min_distance = std::numeric_limits<int>::max();
 
       for (vert_p center : centers) {
-        minDistance = std::min(minDistance, v->distances[center.get()]);
+        min_distance = std::min(min_distance, v->distances[center.get()]);
       }
 
-      if (minDistance > maxDistance) {
-        maxDistance = minDistance;
-        farthestVertex = v;
+      if (min_distance > max_distance) {
+        max_distance = min_distance;
+        farthest_vertex = v;
       }
     }
 
     // Add the farthest vertex as a new center
-    centers.insert(farthestVertex);
-    remainingVertices.erase(farthestVertex);
+    centers.insert(farthest_vertex);
+    remaining_vertices.erase(farthest_vertex);
   }
 
   return centers;
@@ -100,8 +119,21 @@ void Graph::RandomLayout() const {
   std::random_device dvc;
   std::mt19937 rng(dvc());
   std::uniform_real_distribution<> distribution(0, vertex_num_ * kEdgeLen);
+  int solo_x = kEdgeLen;
+  int solo_y = kEdgeLen;
 
   for (vert_p v : vertices_) {
+    if (v->adjacent_vertices.size() <= 1) {
+      v->x = solo_x;
+      v->y = solo_y;
+      if (solo_x >= vertex_num_ * kEdgeLen / 10 - kEdgeLen) {
+        solo_y += kEdgeLen;
+        solo_x = kEdgeLen;
+      } else {
+        solo_x += kEdgeLen;
+      }
+      continue;
+    }
     v->x = distribution(rng);
     v->y = distribution(rng);
   }
@@ -109,15 +141,19 @@ void Graph::RandomLayout() const {
 
 void Graph::FormNeighbourhood(Vertex* center, int radius) {
   center->neighboorhood.clear();
-  std::unordered_map<Vertex*, int> traversal = BFS(center, radius);
-  for (std::pair<Vertex*, int> pair : traversal) {
-    center->neighboorhood.insert(pair.first);
+  for (int i = 1; i < radius; ++i) {
+    for (Vertex* v : shortest_paths_[center][i]) {
+      center->neighboorhood.emplace_back(v);
+    }
   }
 }
 
 void Graph::LocalLayout(Vertex* p, int radius) {
+  if (p->adjacent_vertices.size() == 0) {
+    return;
+  }
   double max_delta;
-  Vertex* v_to_adjust;
+  Vertex* v_to_adjust = nullptr;
   for (unsigned long i = 0; i < kIterations * vertices_.size(); ++i) {
     max_delta = 0;
     for (Vertex* v : p->neighboorhood) {
@@ -128,7 +164,32 @@ void Graph::LocalLayout(Vertex* p, int radius) {
         v_to_adjust = v;
       }
     }
-    graph_math.SolveLinearEquations(v_to_adjust);
+    if (v_to_adjust != nullptr) {
+      graph_math.SolveLinearEquations(v_to_adjust);
+    }
+  }
+}
+
+void Graph::ShortestPaths(Vertex* start) {
+  std::vector<bool> visited(vertex_num_, false);
+  std::queue<std::pair<Vertex*, int>> q;
+
+  visited[start->kVertInd] = true;
+  q.push({start, 0});
+
+  while (!q.empty()) {
+    Vertex* current_vertex = q.front().first;
+    int current_depth = q.front().second;
+    q.pop();
+    shortest_paths_[start][current_depth].insert(current_vertex);
+
+    // Explore neighbors and update distances.
+    for (Vertex* neighbor : current_vertex->adjacent_vertices) {
+      if (!visited[neighbor->kVertInd]) {
+        visited[neighbor->kVertInd] = true;
+        q.push({neighbor, current_depth + 1});
+      }
+    }
   }
 }
 
@@ -136,6 +197,7 @@ void Graph::GlobalLayout() {
 
   for (vert_p v : vertices_) {
     v->distances = BFS(v.get(), vertex_num_);
+    ShortestPaths(v.get());
   }
 
   RandomLayout();
@@ -144,30 +206,34 @@ void Graph::GlobalLayout() {
   int k = kMinSize;
 
   while (k <= vertex_num_) {
-    std::unordered_set<std::shared_ptr<Vertex>> c = kCenter(k);
+    std::unordered_set<vert_p> c = kCenter(k);
 
-    int maxDistance = -1;
+    int max_distance = -1;
 
     // Find the vertex farthest from the current set of centers
     // graph diameter
     for (vert_p v : c) {
-      int minDistance = std::numeric_limits<int>::max();
+      int min_distance = std::numeric_limits<int>::max();
 
       for (vert_p n : c) {
         if (n != v) {
-          minDistance = std::min(minDistance, v->distances[n.get()]);
+          min_distance = std::min(min_distance, v->distances[n.get()]);
         }
       }
 
-      if (minDistance > maxDistance) {
-        maxDistance = minDistance;
+      if (min_distance > max_distance) {
+        max_distance = min_distance;
       }
     }
-    radius = kLocalRadius * maxDistance;
+    radius = kLocalRadius * max_distance;
     for (vert_p center : c) {
       FormNeighbourhood(center.get(), radius);
       LocalLayout(center.get(), radius);
     }
+    std::cout
+        << k
+        << " centers are processesed successfully\nproceed to next iteration\n"
+        << std::flush;
     std::random_device dev;
     std::mt19937 gen(dev());
     std::uniform_real_distribution<> distribution(0, 1);

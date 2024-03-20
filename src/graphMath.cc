@@ -1,19 +1,22 @@
 #include "h/graphMath.h"
 
 double GraphMath::EuclideanDistance(Vertex* v, Vertex* u, float power) {
-  return std::pow((std::pow(v->x - u->x, 2)) + pow(v->y - u->y, 2), power);
+  return std::pow(
+      ((v->x - u->x) * ((v->x - u->x))) + ((v->y - u->y) * (v->y - u->y)),
+      power);
 }
 
 double GraphMath::OneVariableDerivative(Vertex* parameter, char with_respect) {
   double coordinate_p = (with_respect == 'x') ? parameter->x : parameter->y;
   double derivative = 0.0;
+
   for (Vertex* neighbor : parameter->neighboorhood) {
+    int dist = parameter->distances[neighbor];
     double coordinate_n = (with_respect == 'x') ? neighbor->x : neighbor->y;
     derivative += ((coordinate_p - coordinate_n) -
-                   (kEdgeLen * parameter->distances[neighbor]) *
-                       (coordinate_p - coordinate_n) /
+                   (kEdgeLen * dist) * (coordinate_p - coordinate_n) /
                        EuclideanDistance(parameter, neighbor, 0.5)) /
-                  parameter->distances[neighbor];
+                  dist;
   }
   return derivative;
 }
@@ -21,8 +24,8 @@ double GraphMath::OneVariableDerivative(Vertex* parameter, char with_respect) {
 double GraphMath::CalculateDelta(Vertex* parameter) {
   double first_derivative = OneVariableDerivative(parameter, 'x');
   double second_derivative = OneVariableDerivative(parameter, 'y');
-  double delta =
-      std::sqrt(std::pow(first_derivative, 2) + std::pow(second_derivative, 2));
+  double delta = std::sqrt(first_derivative * first_derivative +
+                           second_derivative * second_derivative);
   return delta;
 }
 
@@ -31,9 +34,11 @@ double GraphMath::TwoVariablesDerivative(Vertex* parameter, char with_respect1,
   double derivative = 0.0;
   double coordinate_p1 = (with_respect1 == 'x') ? parameter->x : parameter->y;
   double coordinate_p2 = (with_respect2 == 'x') ? parameter->x : parameter->y;
+
   for (Vertex* n : parameter->neighboorhood) {
     double coordinate_n1 = (with_respect1 == 'x') ? n->x : n->y;
     double coordinate_n2 = (with_respect2 == 'x') ? n->x : n->y;
+
     double intermed_value =
         (kEdgeLen * parameter->distances[n] * (coordinate_p1 - coordinate_n1) *
          (coordinate_p2 - coordinate_n2)) /
@@ -60,12 +65,12 @@ void GraphMath::SolveLinearEquations(Vertex* p) {
   double delta_x = 0;
   double delta_y = 0;
 
-  if (a_1 != 0) {  // Normalize first coeff
+  if (a_1 != 0) {  // Normalize first coeff of the first equation
     b_1 /= a_1;
     c_1 /= a_1;
     a_1 = 1.0;
 
-    if (a_2 != 0) {  // Normalize first coeff
+    if (a_2 != 0) {  // Normalize first coeff of the second equation
       b_2 /= a_2;
       c_2 /= a_2;
       a_2 = 1.0;

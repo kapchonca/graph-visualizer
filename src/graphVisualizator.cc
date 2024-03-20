@@ -60,12 +60,12 @@ void Visualizator::DrawVertex(Vertex* v) {
 }
 
 void Visualizator::DrawEdges(Vertex* v) {
-  for (std::weak_ptr<Vertex> u : v->adjacent_vertices) {
+  for (Vertex* u : v->adjacent_vertices) {
 
     int x1 = v->x;
     int y1 = v->y;
-    int x2 = u.lock()->x;
-    int y2 = u.lock()->y;
+    int x2 = u->x;
+    int y2 = u->y;
     // Function to draw a line using Bresenham's algorithm
     int dx = std::abs(x2 - x1);
     int dy = std::abs(y2 - y1);
@@ -109,17 +109,20 @@ void Visualizator::DrawNumbers() {
   int num_height = 16;
   int num_width = 8;
   number_writer.SetDimensions(num_width, num_height);
+
   int padding_x = 24;
-  int dig_count;
   std::vector<std::vector<std::vector<int8_t>>> digits(10);
+
   for (int digit = 0; digit < 10; ++digit) {
     std::string filename = std::to_string(digit);
     filename = "./sprites/" + filename + ".bmp";
     digits[digit] = number_writer.Read(filename);
   }
+
+  int dig_count;
   for (vert_p v : vertices_) {
     dig_count = 1;
-    std::string num = std::to_string(v->kVertInd);
+    std::string num = std::to_string(v->kVertInd + 1);
     for (char digit : num) {
       int digit_s = digit - '0';
       for (int y = 0; y < num_height; ++y) {

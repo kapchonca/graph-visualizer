@@ -7,13 +7,16 @@
 
 #include "graphHandler.h"
 
+using vert_p = std::shared_ptr<Vertex>;
+
 class Visualizator {
  public:
-  Visualizator(std::vector<std::shared_ptr<Vertex>> vertices)
-      : vertices_(vertices){};
+  Visualizator(std::vector<vert_p> vertices) : vertices_(vertices){};
+
   // Return image data
   std::vector<std::vector<int8_t>> GetPixels(
       const std::pair<int, int>& dimensions);
+
   // Moves vertices to optimal coordinates for image size optimization and returns their coords
   std::pair<int, int> GetCoordinates();
 
@@ -32,7 +35,6 @@ class Visualizator {
 
   const int kEdgeLen = 40;
   std::vector<std::vector<int8_t>> image_data_;
-
-  std::vector<std::shared_ptr<Vertex>> vertices_;
+  std::vector<vert_p> vertices_;
 };
 #endif  //LAB4_H_GRAPHVISUALIZATOR_H_

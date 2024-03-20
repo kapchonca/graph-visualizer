@@ -30,14 +30,23 @@ struct BMPHeader {
 
 class BMPWriter {
  public:
+  // Write data to a bmp image
   bool save(const std::string& filename);
+
+  // Read image data from the given file
   std::vector<std::vector<int8_t>> Read(const std::string& filename);
+
+  // Calculates row size with padding
   int calculateRowSize();
+
+  // Sets dimensions of the output image
   void SetDimensions(int width, int height);
-  void SetImageData(std::vector<std::vector<int8_t>> imageData);
+
+  // Sets image data for output image
+  void SetImageData(std::vector<std::vector<int8_t>> image_data);
 
  private:
-  std::vector<std::vector<int8_t>> imageData_;
+  std::vector<std::vector<int8_t>> image_data_;
   BMPHeader header_;
 };
 

@@ -11,10 +11,10 @@
 struct Vertex {
   Vertex(const int ind) : kVertInd(ind){};
   const int kVertInd;
-  std::vector<std::weak_ptr<Vertex>> adjacent_vertices;
+  std::vector<Vertex*> adjacent_vertices;
   std::unordered_map<Vertex*, int> distances;
   double x, y;
-  std::unordered_set<Vertex*> neighboorhood;
+  std::vector<Vertex*> neighboorhood;
 };
 
 class GraphMath {
