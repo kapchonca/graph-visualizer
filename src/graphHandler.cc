@@ -1,6 +1,6 @@
 #include "h/graphHandler.h"
 
-Graph::Graph(const std::string file_path) {
+Graph::Graph(const std::string& file_path) {
   std::ifstream input_file(file_path);
 
   if (!input_file.is_open()) {
@@ -13,7 +13,7 @@ Graph::Graph(const std::string file_path) {
   // Resize the vertices vector and initialize vertices.
   vertices_.resize(vertex_num_, nullptr);
   for (int i = 0; i < vertex_num_; ++i) {
-    std::shared_ptr<Vertex> v = std::make_shared<Vertex>(i);
+    vert_p v = std::make_shared<Vertex>(i);
     vertices_[i] = v;
   }
 
@@ -55,10 +55,9 @@ std::unordered_map<Vertex*, int> Graph::BFS(Vertex* start,
 }
 
 // Greedy 2-Approximation Algorithm for k-Center
-std::unordered_set<std::shared_ptr<Vertex>> Graph::kCenter(
-    long unsigned k) const {
-  std::unordered_set<std::shared_ptr<Vertex>> centers;
-  std::unordered_set<std::shared_ptr<Vertex>> remainingVertices;
+std::unordered_set<vert_p> Graph::kCenter(long unsigned k) const {
+  std::unordered_set<vert_p> centers;
+  std::unordered_set<vert_p> remainingVertices;
 
   remainingVertices.insert(vertices_.begin(), vertices_.end());
   // Select the first center arbitrarily
@@ -67,20 +66,19 @@ std::unordered_set<std::shared_ptr<Vertex>> Graph::kCenter(
   std::uniform_int_distribution<std::mt19937::result_type> distribution(
       0, vertex_num_ - 1);
 
-  auto firstVertex = vertices_[distribution(rng)];
+  vert_p firstVertex = vertices_[distribution(rng)];
   centers.insert(firstVertex);
-  // std::cout << "inserted vertex " << firstVertex->kVertInd + 1 << std::endl;
   remainingVertices.erase(firstVertex);
 
   while (centers.size() < k) {
-    std::shared_ptr<Vertex> farthestVertex = nullptr;
+    vert_p farthestVertex = nullptr;
     int maxDistance = -1;
 
     // Find the vertex farthest from the current set of centers
-    for (auto v : remainingVertices) {
+    for (vert_p v : remainingVertices) {
       int minDistance = std::numeric_limits<int>::max();
 
-      for (auto center : centers) {
+      for (vert_p center : centers) {
         minDistance = std::min(minDistance, v->distances[center.get()]);
       }
 
@@ -92,8 +90,6 @@ std::unordered_set<std::shared_ptr<Vertex>> Graph::kCenter(
 
     // Add the farthest vertex as a new center
     centers.insert(farthestVertex);
-    // std::cout << "inserted vertex " << farthestVertex->kVertInd + 1
-    //           << std::endl;
     remainingVertices.erase(farthestVertex);
   }
 
@@ -105,18 +101,16 @@ void Graph::RandomLayout() const {
   std::mt19937 rng(dvc());
   std::uniform_real_distribution<> distribution(0, vertex_num_ * kEdgeLen);
 
-  for (auto v : vertices_) {
+  for (vert_p v : vertices_) {
     v->x = distribution(rng);
     v->y = distribution(rng);
-    // std::cout << "vertex index: " << v->kVertInd + 1
-    //           << " initial placement: " << v->x << ' ' << v->y << std::endl;
   }
 }
 
 void Graph::FormNeighbourhood(Vertex* center, int radius) {
   center->neighboorhood.clear();
   std::unordered_map<Vertex*, int> traversal = BFS(center, radius);
-  for (auto pair : traversal) {
+  for (std::pair<Vertex*, int> pair : traversal) {
     center->neighboorhood.insert(pair.first);
   }
 }
@@ -126,7 +120,7 @@ void Graph::LocalLayout(Vertex* p, int radius) {
   Vertex* v_to_adjust;
   for (unsigned long i = 0; i < kIterations * vertices_.size(); ++i) {
     max_delta = 0;
-    for (auto v : p->neighboorhood) {
+    for (Vertex* v : p->neighboorhood) {
       FormNeighbourhood(v, radius);
       double delta = graph_math.CalculateDelta(v);
       if (delta > max_delta) {
@@ -140,7 +134,7 @@ void Graph::LocalLayout(Vertex* p, int radius) {
 
 void Graph::GlobalLayout() {
 
-  for (auto v : vertices_) {
+  for (vert_p v : vertices_) {
     v->distances = BFS(v.get(), vertex_num_);
   }
 
@@ -149,19 +143,17 @@ void Graph::GlobalLayout() {
   int radius;
   int k = kMinSize;
 
-  // GraphMath graph_math(vertices_);
-
   while (k <= vertex_num_) {
-    auto c = kCenter(k);
+    std::unordered_set<std::shared_ptr<Vertex>> c = kCenter(k);
 
     int maxDistance = -1;
 
     // Find the vertex farthest from the current set of centers
     // graph diameter
-    for (auto v : c) {
+    for (vert_p v : c) {
       int minDistance = std::numeric_limits<int>::max();
 
-      for (auto n : c) {
+      for (vert_p n : c) {
         if (n != v) {
           minDistance = std::min(minDistance, v->distances[n.get()]);
         }
@@ -172,17 +164,29 @@ void Graph::GlobalLayout() {
       }
     }
     radius = kLocalRadius * maxDistance;
-    for (auto center : c) {
+    for (vert_p center : c) {
       FormNeighbourhood(center.get(), radius);
       LocalLayout(center.get(), radius);
     }
     std::random_device dev;
     std::mt19937 gen(dev());
     std::uniform_real_distribution<> distribution(0, 1);
-    for (auto v : vertices_) {
+    for (vert_p v : vertices_) {
       v->x += distribution(gen);
       v->y += distribution(gen);
     }
     k *= kRatio;
   }
+}
+
+void Graph::DrawGraph(const std::string& filename) {
+
+  GlobalLayout();
+
+  Visualizator visual(vertices_);
+  std::pair<int, int> dimensions = visual.GetCoordinates();
+
+  write.SetDimensions(dimensions.first, dimensions.second);
+  write.SetImageData(visual.GetPixels(dimensions));
+  write.save("output/" + filename + ".bmp");
 }

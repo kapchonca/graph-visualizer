@@ -7,7 +7,7 @@ double GraphMath::EuclideanDistance(Vertex* v, Vertex* u, float power) {
 double GraphMath::OneVariableDerivative(Vertex* parameter, char with_respect) {
   double coordinate_p = (with_respect == 'x') ? parameter->x : parameter->y;
   double derivative = 0.0;
-  for (auto neighbor : parameter->neighboorhood) {
+  for (Vertex* neighbor : parameter->neighboorhood) {
     double coordinate_n = (with_respect == 'x') ? neighbor->x : neighbor->y;
     derivative += ((coordinate_p - coordinate_n) -
                    (kEdgeLen * parameter->distances[neighbor]) *
@@ -31,7 +31,7 @@ double GraphMath::TwoVariablesDerivative(Vertex* parameter, char with_respect1,
   double derivative = 0.0;
   double coordinate_p1 = (with_respect1 == 'x') ? parameter->x : parameter->y;
   double coordinate_p2 = (with_respect2 == 'x') ? parameter->x : parameter->y;
-  for (auto n : parameter->neighboorhood) {
+  for (Vertex* n : parameter->neighboorhood) {
     double coordinate_n1 = (with_respect1 == 'x') ? n->x : n->y;
     double coordinate_n2 = (with_respect2 == 'x') ? n->x : n->y;
     double intermed_value =

@@ -1,24 +1,6 @@
 #include "h/bmpHandler.h"
 
-BMPWriter::BMPWriter() {
-
-  header_.signature = 0x4D42;
-  header_.fileSize = 0;
-  header_.reserved1 = 0;
-  header_.reserved2 = 0;
-  header_.dataOffset = sizeof(BMPHeader);
-  header_.headerSize = sizeof(BMPHeader) - 14;
-  header_.planes = 1;
-  header_.bitsPerPixel = 24;
-  header_.compression = 0;
-  header_.imageSize = 0;
-  header_.xPixelsPerMeter = 2835;
-  header_.yPixelsPerMeter = 2835;
-  header_.colorsUsed = 0;
-  header_.colorsImportant = 0;
-}
-
-bool BMPWriter::save(const std::string filename) {
+bool BMPWriter::save(const std::string& filename) {
   std::ofstream file_(filename);
   if (!file_.is_open()) {
     std::cerr << "Error: File not open for writing." << std::endl;
@@ -54,7 +36,7 @@ std::vector<std::vector<int8_t>> BMPWriter::Read(const std::string& filename) {
 
   file.seekg(bytesToSkip, std::ios::cur);
 
-  int rowSize = calculateRowSize(header_);
+  int rowSize = calculateRowSize();
   int paddedSize = rowSize * header_.height;
 
   std::vector<int8_t> temp_img_data(paddedSize, 0);
@@ -72,9 +54,9 @@ std::vector<std::vector<int8_t>> BMPWriter::Read(const std::string& filename) {
   return imageData_;
 }
 
-int BMPWriter::calculateRowSize(BMPHeader header) {
-  int bytesPerPixel = header.bitsPerPixel / 8;
-  int rowSizeBytes = (header.width * bytesPerPixel + 3) & ~3;
+int BMPWriter::calculateRowSize() {
+  int bytesPerPixel = header_.bitsPerPixel / 8;
+  int rowSizeBytes = ((header_.width * bytesPerPixel + 3) / 4) * 4;
   return rowSizeBytes;
 }
 
@@ -83,4 +65,8 @@ void BMPWriter::SetDimensions(int width, int height) {
   header_.height = height;
   imageData_.resize(height,
                     std::vector<int8_t>(header_.bitsPerPixel / 8 * width, 0));
+}
+
+void BMPWriter::SetImageData(std::vector<std::vector<int8_t>> imageData) {
+  imageData_ = imageData;
 }

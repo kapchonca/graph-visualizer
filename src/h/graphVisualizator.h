@@ -11,14 +11,27 @@ class Visualizator {
  public:
   Visualizator(std::vector<std::shared_ptr<Vertex>> vertices)
       : vertices_(vertices){};
-  std::vector<std::vector<int8_t>> GetPixels(std::pair<int, int> dimensions);
-  std::vector<std::vector<int8_t>> DrawNumbers(
-      std::vector<std::vector<int8_t>> image_data);
-  void RoundCoords(Vertex* v);
-  std::pair<int, int> MoveCoordinates();
+  // Return image data
+  std::vector<std::vector<int8_t>> GetPixels(
+      const std::pair<int, int>& dimensions);
+  // Moves vertices to optimal coordinates for image size optimization and returns their coords
+  std::pair<int, int> GetCoordinates();
 
  private:
+  // Round coordinates to the closest intereger values
+  void RoundCoords(Vertex* v);
+
+  // Add numbers to the image
+  void DrawNumbers();
+
+  // Draw a circle
+  void DrawVertex(Vertex* v);
+
+  // Draw all edges connected to the vertex
+  void DrawEdges(Vertex* v);
+
   const int kEdgeLen = 40;
+  std::vector<std::vector<int8_t>> image_data_;
 
   std::vector<std::shared_ptr<Vertex>> vertices_;
 };
